@@ -1,4 +1,5 @@
 using FraudRuleEngine.Transactions.Api.Data;
+using Newtonsoft.Json;
 using System.Text.Json;
 
 namespace FraudRuleEngine.Transactions.Api.Services.Messaging;
@@ -22,7 +23,7 @@ public class OutboxService : IOutboxService
         var outboxMessage = new OutboxMessage
         {
             EventType = domainEvent.GetType().Name,
-            Payload = JsonSerializer.Serialize(domainEvent),
+            Payload = JsonConvert.SerializeObject(domainEvent),
             CreatedAt = DateTime.UtcNow
         };
 
