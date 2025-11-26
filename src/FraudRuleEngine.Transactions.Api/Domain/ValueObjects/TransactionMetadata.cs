@@ -4,7 +4,7 @@ public class TransactionMetadata
 {
     public Dictionary<string, string> Data { get; private set; } = new();
 
-    private TransactionMetadata() { } // EF Core
+    private TransactionMetadata() { } 
 
     private TransactionMetadata(Dictionary<string, string> data)
     {
