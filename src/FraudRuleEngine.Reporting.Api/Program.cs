@@ -5,6 +5,10 @@ using FraudRuleEngine.Reporting.Api.Services.Queries;
 using FraudRuleEngine.Reporting.Api.Workers;
 using FraudRuleEngine.Shared.Messaging;
 using Microsoft.EntityFrameworkCore;
+using OpenTelemetry;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using Polly;
 using Polly.Extensions.Http;
 
@@ -46,6 +50,30 @@ builder.Services.AddHttpClient("HttpClient")
 builder.Services.AddHealthChecks()
     .AddNpgSql(builder.Configuration.GetConnectionString("ReportingDb") ?? string.Empty);
 
+// OpenTelemetry
+var serviceName = "fraud-rule-engine-reporting-api";
+var serviceVersion = "1.0.0";
+
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource
+        .AddService(serviceName: serviceName, serviceVersion: serviceVersion))
+    .WithTracing(tracing => tracing
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddEntityFrameworkCoreInstrumentation()
+        .AddSource("FraudRuleEngine.Kafka.Consumer")
+        .AddJaegerExporter(options =>
+        {
+            options.AgentHost = builder.Configuration["Jaeger:AgentHost"] ?? "jaeger";
+            options.AgentPort = builder.Configuration.GetValue<int>("Jaeger:AgentPort", 6831);
+        }))
+    .WithMetrics(metrics => metrics
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddRuntimeInstrumentation()
+        .AddMeter("FraudRuleEngine")
+        .AddPrometheusExporter());
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -72,6 +100,10 @@ app.UseExceptionHandler(exceptionHandlerApp =>
 });
 
 app.MapHealthChecks("/health");
+
+// Prometheus metrics endpoint
+app.MapPrometheusScrapingEndpoint();
+
 app.MapControllers();
 
 // Migrate database

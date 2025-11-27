@@ -1,12 +1,17 @@
 using Confluent.Kafka;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using OpenTelemetry;
+using OpenTelemetry.Context.Propagation;
+using System.Diagnostics;
+using System.Text;
 using System.Text.Json;
 
 namespace FraudRuleEngine.Shared.Messaging;
 
 public class KafkaEventProducer : IEventProducer, IDisposable
 {
+    private static readonly ActivitySource ActivitySource = new("FraudRuleEngine.Kafka.Producer");
     private readonly IProducer<string, string> _producer;
     private readonly ILogger<KafkaEventProducer> _logger;
 
@@ -24,16 +29,31 @@ public class KafkaEventProducer : IEventProducer, IDisposable
         _producer = new ProducerBuilder<string, string>(config).Build();
     }
 
+    private static readonly TextMapPropagator Propagator = Propagators.DefaultTextMapPropagator;
+
     public async Task ProduceAsync<T>(string topic, T message, CancellationToken cancellationToken = default) where T : class
     {
+        using var activity = ActivitySource.StartActivity($"kafka.produce.{topic}", ActivityKind.Producer);
+        
         try
         {
             var json = JsonSerializer.Serialize(message);
             var kafkaMessage = new Message<string, string>
             {
                 Key = Guid.NewGuid().ToString(),
-                Value = json
+                Value = json,
+                Headers = new Headers()
             };
+
+            // Propagate trace context through Kafka headers
+            if (activity != null)
+            {
+                activity.SetTag("messaging.system", "kafka");
+                activity.SetTag("messaging.destination", topic);
+                activity.SetTag("messaging.destination_kind", "topic");
+                
+                Propagator.Inject(new PropagationContext(activity.Context, Baggage.Current), kafkaMessage.Headers, InjectTraceContext);
+            }
 
             var result = await _producer.ProduceAsync(topic, kafkaMessage, cancellationToken);
             _logger.LogInformation("Message produced to topic {Topic} at offset {Offset}", topic, result.Offset);
@@ -45,15 +65,33 @@ public class KafkaEventProducer : IEventProducer, IDisposable
         }
     }
 
+    private static void InjectTraceContext(Headers headers, string key, string value)
+    {
+        headers.Add(key, Encoding.UTF8.GetBytes(value));
+    }
+
     public async Task ProduceAsync(string topic, string jsonPayload, CancellationToken cancellationToken = default)
     {
+        using var activity = ActivitySource.StartActivity($"kafka.produce.{topic}", ActivityKind.Producer);
+        
         try
         {
             var kafkaMessage = new Message<string, string>
             {
                 Key = Guid.NewGuid().ToString(),
-                Value = jsonPayload
+                Value = jsonPayload,
+                Headers = new Headers()
             };
+
+            // Propagate trace context through Kafka headers
+            if (activity != null)
+            {
+                activity.SetTag("messaging.system", "kafka");
+                activity.SetTag("messaging.destination", topic);
+                activity.SetTag("messaging.destination_kind", "topic");
+                
+                Propagator.Inject(new PropagationContext(activity.Context, Baggage.Current), kafkaMessage.Headers, InjectTraceContext);
+            }
 
             var result = await _producer.ProduceAsync(topic, kafkaMessage, cancellationToken);
             _logger.LogInformation("Message produced to topic {Topic} at offset {Offset}", topic, result.Offset);
