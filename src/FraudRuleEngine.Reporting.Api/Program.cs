@@ -9,6 +9,7 @@ using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using System;
 using Polly;
 using Polly.Extensions.Http;
 
@@ -62,15 +63,13 @@ builder.Services.AddOpenTelemetry()
         .AddHttpClientInstrumentation()
         .AddEntityFrameworkCoreInstrumentation()
         .AddSource("FraudRuleEngine.Kafka.Consumer")
-        .AddJaegerExporter(options =>
+        .AddOtlpExporter(options =>
         {
-            options.AgentHost = builder.Configuration["Jaeger:AgentHost"] ?? "jaeger";
-            options.AgentPort = builder.Configuration.GetValue<int>("Jaeger:AgentPort", 6831);
+            options.Endpoint = new Uri(builder.Configuration["Jaeger:Endpoint"] ?? "http://jaeger:4317");
         }))
     .WithMetrics(metrics => metrics
         .AddAspNetCoreInstrumentation()
         .AddHttpClientInstrumentation()
-        .AddRuntimeInstrumentation()
         .AddMeter("FraudRuleEngine")
         .AddPrometheusExporter());
 

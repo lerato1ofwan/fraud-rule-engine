@@ -5,15 +5,15 @@ using FraudRuleEngine.Evaluations.Worker.Services;
 using FraudRuleEngine.Evaluations.Worker.Workers;
 using FraudRuleEngine.Shared.Messaging;
 using Microsoft.EntityFrameworkCore;
-using OpenTelemetry;
-using OpenTelemetry.Metrics;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
 using Polly;
+using OpenTelemetry;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Resources;
 using Polly.Extensions.Http;
 using FraudRuleEngine.Core.Domain;
 using FraudRuleEngine.Core.Domain.DataRequests;
 using FraudRuleEngine.Evaluations.Worker.Data.Requests;
+using OpenTelemetry.Metrics;
 
 internal class Program
 {
@@ -74,19 +74,17 @@ internal class Program
 
         builder.Services.AddOpenTelemetry()
             .ConfigureResource(resource => resource
-                .AddService(serviceName: serviceName, serviceVersion: serviceVersion))
+            .AddService(serviceName: serviceName, serviceVersion: serviceVersion))
             .WithTracing(tracing => tracing
                 .AddHttpClientInstrumentation()
                 .AddEntityFrameworkCoreInstrumentation()
                 .AddSource("FraudRuleEngine.Kafka.Consumer", "FraudRuleEngine.Kafka.Producer")
-                .AddJaegerExporter(options =>
+                .AddOtlpExporter(options =>
                 {
-                    options.AgentHost = builder.Configuration["Jaeger:AgentHost"] ?? "jaeger";
-                    options.AgentPort = builder.Configuration.GetValue<int>("Jaeger:AgentPort", 6831);
+                    options.Endpoint = new Uri(builder.Configuration["Jaeger:Endpoint"] ?? "http://jaeger:4317");
                 }))
             .WithMetrics(metrics => metrics
                 .AddHttpClientInstrumentation()
-                .AddRuntimeInstrumentation()
                 .AddMeter("FraudRuleEngine")
                 .AddPrometheusExporter());
 
