@@ -9,16 +9,16 @@ public static class FraudMetrics
 
     // Counters
     public static readonly Counter<long> TransactionsReceivedTotal = Meter
-        .CreateCounter<long>("fraud_transactions_received_total", "count", "Total number of transactions received");
+        .CreateCounter<long>("fraud_transactions_received", "count", "Total number of transactions received");
 
     public static readonly Counter<long> FraudChecksTotal = Meter
-        .CreateCounter<long>("fraud_checks_total", "count", "Total number of fraud checks performed");
+        .CreateCounter<long>("fraud_checks", "count", "Total number of fraud checks performed");
 
     public static readonly Counter<long> TransactionsFlaggedTotal = Meter
-        .CreateCounter<long>("fraud_transactions_flagged_total", "count", "Total number of transactions flagged for fraud");
+        .CreateCounter<long>("fraud_transactions_flagged", "count", "Total number of transactions flagged for fraud");
 
     public static readonly Counter<long> RuleTriggersTotal = Meter
-        .CreateCounter<long>("fraud_rule_triggers_total", "count", "Total number of rule triggers");
+        .CreateCounter<long>("fraud_rule_triggers", "count", "Total number of rule triggers");
 
     // Histograms
     public static readonly Histogram<double> FraudRiskScore = Meter
@@ -32,7 +32,8 @@ public static class FraudMetrics
         .CreateObservableGauge<long>(
             "fraud_active_checks", 
             () => Interlocked.Read(ref _activeFraudChecks),
-            "Number of active fraud checks in progress");
+            unit: null,
+            description: "Number of active fraud checks in progress");
 
     public static void IncrementActiveChecks() => Interlocked.Increment(ref _activeFraudChecks);
     public static void DecrementActiveChecks() => Interlocked.Decrement(ref _activeFraudChecks);

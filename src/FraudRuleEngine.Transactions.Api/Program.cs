@@ -1,4 +1,5 @@
 using FraudRuleEngine.Shared.Messaging;
+using FraudRuleEngine.Shared.Metrics;
 using FraudRuleEngine.Transactions.Api.Data;
 using FraudRuleEngine.Transactions.Api.Data.Repositories;
 using FraudRuleEngine.Transactions.Api.Data.UnitOfWork;
@@ -59,6 +60,9 @@ builder.Services.AddHostedService<OutboxPublisher>();
 var serviceName = "fraud-rule-engine-transactions-api";
 var serviceVersion = "1.0.0";
 
+// Initialize metrics early to ensure they're registered with the meter
+_ = FraudMetrics.TransactionsReceivedTotal;
+
 builder.Services.AddOpenTelemetry()
     .ConfigureResource(resource => resource
         .AddService(serviceName: serviceName, serviceVersion: serviceVersion))
@@ -117,7 +121,7 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<TransactionDbContext>();
     db.Database.Migrate();
 }
-
+Console.WriteLine("Application started!");
 app.Run();
 
 static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()
