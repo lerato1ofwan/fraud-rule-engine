@@ -1,4 +1,5 @@
 using FraudRuleEngine.Shared.Messaging;
+using FraudRuleEngine.Shared.Metrics;
 using FraudRuleEngine.Transactions.Api.Data;
 using FraudRuleEngine.Transactions.Api.Data.Repositories;
 using FraudRuleEngine.Transactions.Api.Data.UnitOfWork;
@@ -8,9 +9,11 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using OpenTelemetry;
+using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using System;
 using Polly;
 using Polly.Extensions.Http;
 using System.Net;
@@ -58,6 +61,20 @@ builder.Services.AddHostedService<OutboxPublisher>();
 var serviceName = "fraud-rule-engine-transactions-api";
 var serviceVersion = "1.0.0";
 
+// Initialize metrics early to ensure they're registered with the meter
+_ = FraudMetrics.TransactionsReceivedTotal;
+
+// Logging
+builder.Logging.ClearProviders();
+builder.Logging.AddOpenTelemetry(options =>
+{
+    options.IncludeScopes = true;
+    options.IncludeFormattedMessage = true;
+    options.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(serviceName: serviceName, serviceVersion: serviceVersion));
+    options.AddConsoleExporter();
+});
+
+// OpenTelemetry
 builder.Services.AddOpenTelemetry()
     .ConfigureResource(resource => resource
         .AddService(serviceName: serviceName, serviceVersion: serviceVersion))
@@ -66,15 +83,14 @@ builder.Services.AddOpenTelemetry()
         .AddHttpClientInstrumentation()
         .AddEntityFrameworkCoreInstrumentation()
         .AddSource("FraudRuleEngine.Kafka.Producer")
-        .AddJaegerExporter(options =>
+        .AddOtlpExporter(options =>
         {
-            options.AgentHost = builder.Configuration["Jaeger:AgentHost"] ?? "jaeger";
-            options.AgentPort = builder.Configuration.GetValue<int>("Jaeger:AgentPort", 6831);
+            options.Endpoint = new Uri(builder.Configuration["Jaeger:Endpoint"] ?? "http://jaeger:4317");
         }))
     .WithMetrics(metrics => metrics
+        .AddRuntimeInstrumentation()
         .AddAspNetCoreInstrumentation()
         .AddHttpClientInstrumentation()
-        .AddRuntimeInstrumentation()
         .AddMeter("FraudRuleEngine")
         .AddPrometheusExporter());
 
@@ -118,7 +134,7 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<TransactionDbContext>();
     db.Database.Migrate();
 }
-
+Console.WriteLine("Application started!");
 app.Run();
 
 static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()

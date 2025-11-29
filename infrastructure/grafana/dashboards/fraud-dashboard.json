@@ -1,96 +1,934 @@
 {
-  "dashboard": {
-    "title": "Fraud Rule Engine Dashboard",
-    "tags": ["fraud", "monitoring"],
-    "timezone": "browser",
-    "panels": [
-      {
-        "id": 1,
-        "title": "Transactions Received",
-        "type": "graph",
-        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
-        "targets": [
-          {
-            "expr": "rate(fraud_transactions_received_total[5m])",
-            "legendFormat": "Transactions/sec",
-            "refId": "A"
-          }
-        ]
+  "title": "Fraud Rule Engine - Dashboard Overview",
+  "description": "Observability dashboard for the demo fraud detection system with analytics",
+  "tags": ["fraud", "monitoring", "observability", "rules-engine"],
+  "timezone": "browser",
+  "refresh": "10s",
+  "schemaVersion": 38,
+  "version": 2,
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": ["10s", "30s", "1m", "5m", "15m", "30m", "1h"]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Total Transactions Received (Last Hour)",
+      "type": "stat",
+      "gridPos": {"h": 4, "w": 3, "x": 0, "y": 0},
+      "targets": [
+        {
+          "expr": "sum(increase(fraud_transactions_received_count_total[1h]))",
+          "legendFormat": "Received",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"value": null, "color": "blue"}
+            ]
+          },
+          "unit": "short"
+        }
       },
-      {
-        "id": 2,
-        "title": "Flagged Transactions",
-        "type": "graph",
-        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
-        "targets": [
-          {
-            "expr": "sum(rate(fraud_transactions_flagged_total[5m]))",
-            "legendFormat": "Flagged/sec",
-            "refId": "A"
-          }
-        ]
+      "options": {
+        "graphMode": "none",
+        "colorMode": "value",
+        "orientation": "auto"
+      }
+    },
+    {
+      "id": 14,
+      "title": "Total Transactions Assessed (Last Hour)",
+      "type": "stat",
+      "gridPos": {"h": 4, "w": 3, "x": 3, "y": 0},
+      "targets": [
+        {
+          "expr": "sum(increase(fraud_checks_count_total[1h]))",
+          "legendFormat": "Assessed",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"value": null, "color": "green"}
+            ]
+          },
+          "unit": "short"
+        }
       },
-      {
-        "id": 3,
-        "title": "Fraud Checks by Status",
-        "type": "graph",
-        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
-        "targets": [
-          {
-            "expr": "sum(rate(fraud_checks_total[5m])) by (is_flagged)",
-            "legendFormat": "{{is_flagged}}",
-            "refId": "A"
-          }
-        ]
+      "options": {
+        "graphMode": "none",
+        "colorMode": "value",
+        "orientation": "auto"
+      }
+    },
+    {
+      "id": 15,
+      "title": "Assessment Coverage",
+      "type": "stat",
+      "gridPos": {"h": 4, "w": 3, "x": 6, "y": 0},
+      "targets": [
+        {
+          "expr": "((sum(increase(fraud_checks_count_total[1h])) / sum(increase(fraud_transactions_received_count_total[1h]))) * 100) and (sum(increase(fraud_transactions_received_count_total[1h])) > 0) or vector(0)",
+          "legendFormat": "Coverage",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"value": null, "color": "red"},
+              {"value": 90, "color": "yellow"},
+              {"value": 95, "color": "green"}
+            ]
+          },
+          "unit": "percent",
+          "decimals": 1,
+          "min": 0,
+          "max": 100,
+          "mappings": [
+            {
+              "options": {
+                "NaN": {
+                  "text": "N/A",
+                  "color": "gray"
+                }
+              },
+              "type": "special"
+            }
+          ]
+        }
       },
-      {
-        "id": 4,
-        "title": "Risk Score Distribution",
-        "type": "graph",
-        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
-        "targets": [
+      "options": {
+        "graphMode": "none",
+        "colorMode": "value",
+        "orientation": "auto"
+      }
+    },
+    {
+      "id": 2,
+      "title": "Flagged Transactions Rate",
+      "type": "stat",
+      "gridPos": {"h": 4, "w": 3, "x": 9, "y": 0},
+      "targets": [
+        {
+          "expr": "((sum(rate(fraud_transactions_flagged_count_total[5m])) / sum(rate(fraud_checks_count_total[5m]))) * 100) and (sum(rate(fraud_checks_count_total[5m])) > 0) or vector(0)",
+          "hide": false,
+          "legendFormat": "Detection Rate",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"value": null, "color": "green"},
+              {"value": 5, "color": "yellow"},
+              {"value": 10, "color": "red"}
+            ]
+          },
+          "unit": "percent",
+          "decimals": 2,
+          "nullValueMode": "null",
+          "mappings": [
+            {
+              "options": {
+                "NaN": {
+                  "text": "0%",
+                  "color": "gray"
+                }
+              },
+              "type": "special"
+            }
+          ]
+        }
+      },
+      "options": {
+        "graphMode": "none",
+        "colorMode": "value"
+      }
+    },
+    {
+      "id": 3,
+      "title": "Active Fraud Checks",
+      "type": "stat",
+      "gridPos": {"h": 4, "w": 3, "x": 12, "y": 0},
+      "targets": [
+        {
+          "expr": "sum(fraud_active_checks_count)",
+          "legendFormat": "Active",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"value": null, "color": "blue"},
+              {"value": 10, "color": "yellow"},
+              {"value": 50, "color": "red"}
+            ]
+          },
+          "unit": "short"
+        }
+      },
+      "options": {
+        "graphMode": "none",
+        "colorMode": "value"
+      }
+    },
+    {
+      "id": 4,
+      "title": "Avg Risk Score",
+      "type": "stat",
+      "gridPos": {"h": 4, "w": 3, "x": 15, "y": 0},
+      "targets": [
+        {
+          "expr": "(sum(rate(fraud_risk_score_sum[5m])) / sum(rate(fraud_risk_score_count[5m]))) and (sum(rate(fraud_risk_score_count[5m])) > 0) or vector(0)",
+          "legendFormat": "Avg Risk",
+          "hide": false,
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"value": null, "color": "green"},
+              {"value": 0.3, "color": "yellow"},
+              {"value": 0.5, "color": "orange"},
+              {"value": 0.7, "color": "red"}
+            ]
+          },
+          "unit": "none",
+          "decimals": 3,
+          "min": 0,
+          "max": 1,
+          "nullValueMode": "null",
+          "mappings": [
+            {
+              "options": {
+                "NaN": {
+                  "text": "0.000",
+                  "color": "gray"
+                }
+              },
+              "type": "special"
+            }
+          ]
+        }
+      },
+      "options": {
+        "graphMode": "none",
+        "colorMode": "value"
+      }
+    },
+    {
+      "id": 5,
+      "title": "Transaction Throughput",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+      "targets": [
+        {
+          "expr": "sum(rate(fraud_transactions_received_count_total[5m]))",
+          "legendFormat": "Transactions/sec",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {
+            "axisLabel": "Transactions/sec",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "unit": "reqps"
+        }
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 6,
+      "title": "Transactions by Status",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+      "targets": [
+        {
+          "expr": "sum(rate(fraud_checks_count_total{is_flagged=\"true\"}[5m]))",
+          "legendFormat": "Flagged",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(rate(fraud_checks_count_total{is_flagged=\"false\"}[5m]))",
+          "legendFormat": "Not Flagged",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {
+            "axisLabel": "Checks/sec",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "unit": "reqps"
+        },
+        "overrides": [
           {
-            "expr": "histogram_quantile(0.95, sum(rate(fraud_risk_score_bucket[5m])) by (le))",
-            "legendFormat": "95th percentile",
-            "refId": "A"
+            "matcher": {"id": "byName", "options": "Flagged"},
+            "properties": [
+              {"id": "color", "value": {"fixedColor": "red", "mode": "fixed"}}
+            ]
           },
           {
-            "expr": "histogram_quantile(0.50, sum(rate(fraud_risk_score_bucket[5m])) by (le))",
-            "legendFormat": "50th percentile",
-            "refId": "B"
+            "matcher": {"id": "byName", "options": "Not Flagged"},
+            "properties": [
+              {"id": "color", "value": {"fixedColor": "green", "mode": "fixed"}}
+            ]
           }
         ]
       },
-      {
-        "id": 5,
-        "title": "Rule Trigger Count",
-        "type": "graph",
-        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
-        "targets": [
-          {
-            "expr": "sum(rate(fraud_rule_triggers_total[5m])) by (rule_name)",
-            "legendFormat": "{{rule_name}}",
-            "refId": "A"
-          }
-        ]
-      },
-      {
-        "id": 6,
-        "title": "Evaluation Duration",
-        "type": "graph",
-        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
-        "targets": [
-          {
-            "expr": "histogram_quantile(0.95, sum(rate(fraud_evaluation_duration_seconds_bucket[5m])) by (le))",
-            "legendFormat": "95th percentile",
-            "refId": "A"
-          }
-        ]
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
       }
-    ],
-    "refresh": "10s",
-    "schemaVersion": 27,
-    "version": 1
-  }
+    },
+    {
+      "id": 7,
+      "title": "Rule Trigger Performance - Top Rules",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 16, "x": 0, "y": 12},
+      "targets": [
+        {
+          "expr": "sum(rate(fraud_rule_triggers_count_total{rule_name=\"HighAmountRule\"}[5m]))",
+          "legendFormat": "HighAmountRule",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(rate(fraud_rule_triggers_count_total{rule_name=\"VelocityRule\"}[5m]))",
+          "legendFormat": "VelocityRule",
+          "refId": "B"
+        },
+        {
+          "expr": "sum(rate(fraud_rule_triggers_count_total{rule_name=\"ForeignCountryRule\"}[5m]))",
+          "legendFormat": "ForeignCountryRule",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {
+            "axisLabel": "Triggers/sec",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "unit": "reqps"
+        }
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 8,
+      "title": "Rule Trigger Distribution (Last Hour)",
+      "type": "bargauge",
+      "gridPos": {"h": 8, "w": 8, "x": 16, "y": 12},
+      "targets": [
+        {
+          "expr": "sum(increase(fraud_rule_triggers_count_total[1h])) by (rule_name)",
+          "legendFormat": "{{rule_name}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {
+            "axisLabel": "Total Triggers",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "displayMode": "gradient",
+            "orientation": "horizontal",
+            "showUnfilled": false
+          },
+          "unit": "short",
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["lastNotNull"],
+          "fields": ""
+        },
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": false,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 9,
+      "title": "Risk Score Distribution",
+      "type": "histogram",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 20},
+      "targets": [
+        {
+          "expr": "sum(rate(fraud_risk_score_bucket[5m])) by (le)",
+          "legendFormat": "{{le}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {
+            "axisLabel": "Risk Score",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "gradientMode": "opacity",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never"
+          },
+          "unit": "none",
+          "min": 0,
+          "max": 1
+        }
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi"
+        },
+        "bucketOffset": 0,
+        "bucketSize": 0.1
+      }
+    },
+    {
+      "id": 10,
+      "title": "Risk Score Percentiles",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 20},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(fraud_risk_score_bucket[5m])) by (le))",
+          "legendFormat": "95th percentile",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.75, sum(rate(fraud_risk_score_bucket[5m])) by (le))",
+          "legendFormat": "75th percentile",
+          "refId": "B"
+        },
+        {
+          "expr": "histogram_quantile(0.50, sum(rate(fraud_risk_score_bucket[5m])) by (le))",
+          "legendFormat": "50th percentile (median)",
+          "refId": "C"
+        },
+        {
+          "expr": "(sum(rate(fraud_risk_score_sum[5m])) / sum(rate(fraud_risk_score_count[5m]))) and (sum(rate(fraud_risk_score_count[5m])) > 0) or vector(0)",
+          "legendFormat": "Average",
+          "refId": "D",
+          "hide": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {
+            "axisLabel": "Risk Score",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "unit": "none",
+          "min": 0,
+          "max": 1
+        },
+        "overrides": [
+          {
+            "matcher": {"id": "byName", "options": "Average"},
+            "properties": [
+              {"id": "lineWidth", "value": 3},
+              {"id": "color", "value": {"fixedColor": "red", "mode": "fixed"}}
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 11,
+      "title": "Evaluation Duration (P95, P50, Avg)",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 28},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(fraud_evaluation_duration_seconds_bucket[5m])) by (le))",
+          "legendFormat": "P95",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.50, sum(rate(fraud_evaluation_duration_seconds_bucket[5m])) by (le))",
+          "legendFormat": "P50 (median)",
+          "refId": "B"
+        },
+        {
+          "expr": "(sum(rate(fraud_evaluation_duration_seconds_sum[5m])) / sum(rate(fraud_evaluation_duration_seconds_count[5m]))) and (sum(rate(fraud_evaluation_duration_seconds_count[5m])) > 0) or vector(0)",
+          "legendFormat": "Average",
+          "refId": "C",
+          "hide": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {
+            "axisLabel": "Duration (seconds)",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "unit": "s"
+        }
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 12,
+      "title": "Flagged Transactions Rate",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 28},
+      "targets": [
+        {
+          "expr": "sum(rate(fraud_transactions_flagged_count_total[5m]))",
+          "legendFormat": "Flagged/sec",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "custom": {
+            "axisLabel": "Flagged Transactions/sec",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "opacity",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false,
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"value": null, "color": "green"},
+              {"value": 1, "color": "yellow"},
+              {"value": 5, "color": "orange"},
+              {"value": 10, "color": "red"}
+            ]
+          },
+          "unit": "reqps"
+        }
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 13,
+      "title": "Rule Effectiveness Matrix",
+      "type": "table",
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 36},
+      "targets": [
+        {
+          "expr": "sum(increase(fraud_rule_triggers_count_total[1h])) by (rule_name)",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "{{rule_name}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "displayMode": "auto",
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"value": null, "color": "green"}
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {"id": "byName", "options": "rule_name"},
+            "properties": [
+              {"id": "custom.width", "value": 200}
+            ]
+          },
+          {
+            "matcher": {"id": "byName", "options": "Value"},
+            "properties": [
+              {"id": "custom.displayMode", "value": "color-background"},
+              {"id": "thresholds", "value": {
+                "mode": "absolute",
+                "steps": [
+                  {"value": null, "color": "blue"},
+                  {"value": 10, "color": "yellow"},
+                  {"value": 50, "color": "orange"},
+                  {"value": 100, "color": "red"}
+                ]
+              }}
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Value"
+          }
+        ]
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true
+            },
+            "indexByName": {
+              "rule_name": 0,
+              "Value": 1
+            },
+            "renameByName": {
+              "rule_name": "Rule Name",
+              "Value": "Triggers (Last Hour)"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "title": "Today's Total Evaluations",
+      "type": "stat",
+      "gridPos": {"h": 4, "w": 4, "x": 0, "y": 44},
+      "targets": [
+        {
+          "expr": "reporting_daily_total_evaluations_count",
+          "legendFormat": "Total Evaluations",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"value": null, "color": "blue"}
+            ]
+          },
+          "unit": "short"
+        }
+      },
+      "options": {
+        "graphMode": "none",
+        "colorMode": "value",
+        "orientation": "auto"
+      }
+    },
+    {
+      "id": 17,
+      "title": "Today's Flagged Count",
+      "type": "stat",
+      "gridPos": {"h": 4, "w": 4, "x": 4, "y": 44},
+      "targets": [
+        {
+          "expr": "reporting_daily_flagged_count",
+          "legendFormat": "Flagged Today",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"value": null, "color": "green"},
+              {"value": 10, "color": "yellow"},
+              {"value": 50, "color": "orange"},
+              {"value": 100, "color": "red"}
+            ]
+          },
+          "unit": "short"
+        }
+      },
+      "options": {
+        "graphMode": "none",
+        "colorMode": "value"
+      }
+    },
+    {
+      "id": 18,
+      "title": "Today's Avg Risk Score",
+      "type": "stat",
+      "gridPos": {"h": 4, "w": 4, "x": 8, "y": 44},
+      "targets": [
+        {
+          "expr": "reporting_daily_average_risk_score",
+          "legendFormat": "Avg Risk (Today)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"value": null, "color": "green"},
+              {"value": 0.3, "color": "yellow"},
+              {"value": 0.5, "color": "orange"},
+              {"value": 0.7, "color": "red"}
+            ]
+          },
+          "unit": "none",
+          "decimals": 3,
+          "min": 0,
+          "max": 1
+        }
+      },
+      "options": {
+        "graphMode": "none",
+        "colorMode": "value"
+      }
+    },
+    {
+      "id": 19,
+      "title": "Top Triggered Rules (Today)",
+      "type": "table",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 44},
+      "targets": [
+        {
+          "expr": "topk(10, sum(increase(fraud_rule_triggers_count_total[24h])) by (rule_name))",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "{{rule_name}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "displayMode": "auto"
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {"id": "byName", "options": "rule_name"},
+            "properties": [
+              {"id": "custom.width", "value": 200},
+              {"id": "displayName", "value": "Rule Name"}
+            ]
+          },
+          {
+            "matcher": {"id": "byName", "options": "Value"},
+            "properties": [
+              {"id": "displayName", "value": "Triggers (24h)"},
+              {"id": "custom.displayMode", "value": "color-background"},
+              {"id": "thresholds", "value": {
+                "mode": "absolute",
+                "steps": [
+                  {"value": null, "color": "blue"},
+                  {"value": 10, "color": "yellow"},
+                  {"value": 50, "color": "orange"},
+                  {"value": 100, "color": "red"}
+                ]
+              }}
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Value"
+          }
+        ]
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true
+            },
+            "indexByName": {
+              "rule_name": 0,
+              "Value": 1
+            },
+            "renameByName": {
+              "rule_name": "Rule Name",
+              "Value": "Triggers (24h)"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "templating": {
+    "list": []
+  },
+  "annotations": {
+    "list": []
+  },
+  "links": []
 }
-

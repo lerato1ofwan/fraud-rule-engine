@@ -36,9 +36,9 @@ public class DomainEventBehaviour<TRequest, TResponse> : IPipelineBehavior<TRequ
             }
             entity.ClearDomainEvents();
         }
-
-        await _context.SaveChangesAsync(cancellationToken);
-
+        
+        await _context.SaveChangesAsync(cancellationToken); 
+        
         return response;
     }
 }

@@ -1,16 +1,18 @@
 using FraudRuleEngine.Reporting.Api.Data;
 using FraudRuleEngine.Reporting.Api.Data.Repositories;
+using FraudRuleEngine.Reporting.Api.Metrics;
 using FraudRuleEngine.Reporting.Api.Services.Projections;
 using FraudRuleEngine.Reporting.Api.Services.Queries;
 using FraudRuleEngine.Reporting.Api.Workers;
 using FraudRuleEngine.Shared.Messaging;
 using Microsoft.EntityFrameworkCore;
-using OpenTelemetry;
+using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Polly;
 using Polly.Extensions.Http;
+using FraudRuleEngine.Reporting.Api.Services.Metrics;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -41,6 +43,14 @@ builder.Services.AddScoped<IEventConsumer, KafkaEventConsumer>();
 // Worker
 builder.Services.AddHostedService<FraudReportingWorker>();
 
+// Metrics Service - updates reporting metrics from database
+builder.Services.AddHostedService<ReportingMetricsService>();
+
+// Initialize metrics
+_ = ReportingMetrics.DailyTotalEvaluations;
+_ = ReportingMetrics.DailyFlaggedCount;
+_ = ReportingMetrics.DailyAverageRiskScore;
+
 // Resilience
 builder.Services.AddHttpClient("HttpClient")
     .AddPolicyHandler(GetRetryPolicy())
@@ -54,6 +64,16 @@ builder.Services.AddHealthChecks()
 var serviceName = "fraud-rule-engine-reporting-api";
 var serviceVersion = "1.0.0";
 
+// Logging
+builder.Logging.ClearProviders();
+builder.Logging.AddOpenTelemetry(options =>
+{
+    options.IncludeScopes = true;
+    options.IncludeFormattedMessage = true;
+    options.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(serviceName: serviceName, serviceVersion: serviceVersion));
+    options.AddConsoleExporter();
+});
+
 builder.Services.AddOpenTelemetry()
     .ConfigureResource(resource => resource
         .AddService(serviceName: serviceName, serviceVersion: serviceVersion))
@@ -62,17 +82,19 @@ builder.Services.AddOpenTelemetry()
         .AddHttpClientInstrumentation()
         .AddEntityFrameworkCoreInstrumentation()
         .AddSource("FraudRuleEngine.Kafka.Consumer")
-        .AddJaegerExporter(options =>
+        .AddOtlpExporter(options =>
         {
-            options.AgentHost = builder.Configuration["Jaeger:AgentHost"] ?? "jaeger";
-            options.AgentPort = builder.Configuration.GetValue<int>("Jaeger:AgentPort", 6831);
+            options.Endpoint = new Uri(builder.Configuration["Jaeger:Endpoint"] ?? "http://jaeger:4317");
         }))
     .WithMetrics(metrics => metrics
+        .AddRuntimeInstrumentation()
         .AddAspNetCoreInstrumentation()
         .AddHttpClientInstrumentation()
-        .AddRuntimeInstrumentation()
         .AddMeter("FraudRuleEngine")
-        .AddPrometheusExporter());
+        .AddMeter("FraudRuleEngine.Reporting")
+        .AddPrometheusExporter())
+    .WithLogging(logging => logging
+        .AddConsoleExporter());
 
 var app = builder.Build();
 
