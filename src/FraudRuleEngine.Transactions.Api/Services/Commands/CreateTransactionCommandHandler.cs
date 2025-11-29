@@ -43,7 +43,7 @@ public class CreateTransactionCommandHandler : IRequestHandler<CreateTransaction
 
             // Increment the metric after successfully adding the transaction
             FraudMetrics.TransactionsReceivedTotal.Add(1, new KeyValuePair<string, object?>("status", "new"));
-            _logger.LogInformation("Incremented fraud_transactions_received_total metric for transaction {TransactionId}", transaction.TransactionId);
+            _logger.LogInformation("Incremented transactions_received_total metric for transaction {TransactionId}", transaction.TransactionId);
 
             return Result<Guid>.Success(transaction.TransactionId);
         }

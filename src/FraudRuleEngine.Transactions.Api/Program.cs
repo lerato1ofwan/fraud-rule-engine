@@ -9,6 +9,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using OpenTelemetry;
+using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -63,6 +64,17 @@ var serviceVersion = "1.0.0";
 // Initialize metrics early to ensure they're registered with the meter
 _ = FraudMetrics.TransactionsReceivedTotal;
 
+// Logging
+builder.Logging.ClearProviders();
+builder.Logging.AddOpenTelemetry(options =>
+{
+    options.IncludeScopes = true;
+    options.IncludeFormattedMessage = true;
+    options.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(serviceName: serviceName, serviceVersion: serviceVersion));
+    options.AddConsoleExporter();
+});
+
+// OpenTelemetry
 builder.Services.AddOpenTelemetry()
     .ConfigureResource(resource => resource
         .AddService(serviceName: serviceName, serviceVersion: serviceVersion))
@@ -76,6 +88,7 @@ builder.Services.AddOpenTelemetry()
             options.Endpoint = new Uri(builder.Configuration["Jaeger:Endpoint"] ?? "http://jaeger:4317");
         }))
     .WithMetrics(metrics => metrics
+        .AddRuntimeInstrumentation()
         .AddAspNetCoreInstrumentation()
         .AddHttpClientInstrumentation()
         .AddMeter("FraudRuleEngine")

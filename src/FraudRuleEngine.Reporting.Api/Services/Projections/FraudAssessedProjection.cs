@@ -1,5 +1,6 @@
 using FraudRuleEngine.Reporting.Api.Data;
 using FraudRuleEngine.Reporting.Api.Data.Models;
+using FraudRuleEngine.Reporting.Api.Metrics;
 using FraudRuleEngine.Shared.Contracts;
 using Microsoft.EntityFrameworkCore;
 
@@ -79,7 +80,17 @@ public class FraudAssessedProjection : IFraudAssessedProjection
         }
 
         await _context.SaveChangesAsync(cancellationToken);
+        
+        UpdateMetricsIncrementally(fraudAssessed);
+        
         _logger.LogInformation("Projected fraud assessment for transaction {TransactionId}", fraudAssessed.TransactionId);
+    }
+
+    private void UpdateMetricsIncrementally(FraudAssessed fraudAssessed)
+    {
+        ReportingMetrics.IncrementDailyStats(
+            fraudAssessed.IsFlagged,
+            (double)fraudAssessed.OverallRiskScore);
     }
 }
 

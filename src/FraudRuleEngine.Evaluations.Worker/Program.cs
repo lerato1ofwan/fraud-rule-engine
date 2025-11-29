@@ -1,20 +1,23 @@
+using FraudRuleEngine.Core.Domain;
+using FraudRuleEngine.Core.Domain.DataRequests;
+using FraudRuleEngine.Core.Domain.Rules;
 using FraudRuleEngine.Evaluations.Worker.Data;
 using FraudRuleEngine.Evaluations.Worker.Data.Repositories;
-using FraudRuleEngine.Core.Domain.Rules;
+using FraudRuleEngine.Evaluations.Worker.Data.Requests;
+using FraudRuleEngine.Evaluations.Worker.Services;
 using FraudRuleEngine.Evaluations.Worker.Workers;
 using FraudRuleEngine.Shared.Messaging;
 using FraudRuleEngine.Shared.Metrics;
 using Microsoft.EntityFrameworkCore;
-using Polly;
+using Microsoft.Extensions.Options;
 using OpenTelemetry;
-using OpenTelemetry.Trace;
-using OpenTelemetry.Resources;
-using Polly.Extensions.Http;
-using FraudRuleEngine.Core.Domain;
-using FraudRuleEngine.Core.Domain.DataRequests;
-using FraudRuleEngine.Evaluations.Worker.Data.Requests;
-using OpenTelemetry.Metrics;
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Logs;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using Polly;
+using Polly.Extensions.Http;
 
 var builder = Host.CreateApplicationBuilder(args);
 
@@ -78,6 +81,16 @@ _ = FraudMetrics.ActiveFraudChecks;
 var serviceName = "fraud-rule-engine-evaluations-worker";
 var serviceVersion = "1.0.0";
 
+// Logging
+builder.Logging.ClearProviders();
+builder.Logging.AddOpenTelemetry(options =>
+{
+    options.IncludeScopes = true;
+    options.IncludeFormattedMessage = true;
+    options.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(serviceName: serviceName, serviceVersion: serviceVersion));
+    options.AddConsoleExporter();
+});
+
 builder.Services.AddOpenTelemetry()
     .ConfigureResource(resource => resource
     .AddService(serviceName: serviceName, serviceVersion: serviceVersion))
@@ -90,6 +103,7 @@ builder.Services.AddOpenTelemetry()
             options.Endpoint = new Uri(builder.Configuration["Jaeger:Endpoint"] ?? "http://jaeger:4317");
         }))
     .WithMetrics(metrics => metrics
+        .AddRuntimeInstrumentation()
         .AddHttpClientInstrumentation()
         .AddMeter("FraudRuleEngine")
         .AddOtlpExporter(otlpOptions =>

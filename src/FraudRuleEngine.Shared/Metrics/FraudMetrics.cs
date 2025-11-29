@@ -5,7 +5,6 @@ namespace FraudRuleEngine.Shared.Metrics;
 public static class FraudMetrics
 {
     private static readonly Meter Meter = new("FraudRuleEngine", "1.0.0");
-    private static long _activeFraudChecks = 0;
 
     // Counters
     public static readonly Counter<long> TransactionsReceivedTotal = Meter
@@ -27,15 +26,11 @@ public static class FraudMetrics
     public static readonly Histogram<double> FraudEvaluationDuration = Meter
         .CreateHistogram<double>("fraud_evaluation_duration_seconds", "seconds", "Time taken to evaluate fraud rules");
 
-    // Gauges
-    public static readonly ObservableGauge<long> ActiveFraudChecks = Meter
-        .CreateObservableGauge<long>(
-            "fraud_active_checks", 
-            () => Interlocked.Read(ref _activeFraudChecks),
-            unit: null,
-            description: "Number of active fraud checks in progress");
+    public static readonly UpDownCounter<long> ActiveFraudChecks = Meter
+        .CreateUpDownCounter<long>("fraud_active_checks", "count", "Number of active fraud checks in progress");
 
-    public static void IncrementActiveChecks() => Interlocked.Increment(ref _activeFraudChecks);
-    public static void DecrementActiveChecks() => Interlocked.Decrement(ref _activeFraudChecks);
+    public static void IncrementActiveChecks() => ActiveFraudChecks.Add(1);
+
+    public static void DecrementActiveChecks() => ActiveFraudChecks.Add(-1);
 }
 
