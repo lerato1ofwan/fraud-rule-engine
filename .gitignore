@@ -1,0 +1,25 @@
+/.vs/**
+/src/*/bin/**
+/src/*/obj/**
+
+# Environment variables
+.env
+
+# Docker volumes and data
+postgres-data/
+prometheus-data/
+grafana-data/
+*.db
+*.sqlite
+*.sqlite3
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
