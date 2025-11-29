@@ -1,0 +1,62 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{A1B2C3D4-E5F6-4A5B-8C9D-0E1F2A3B4C5D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "infrastructure", "infrastructure", "{B2C3D4E5-F6A7-4B5C-9D0E-1F2A3B4C5D6E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docker", "docker", "{C3D4E5F6-A7B8-4C5D-9E0F-1A2B3C4D5E6F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{D4E5F6A7-B8C9-4D5E-9F0A-1B2C3D4E5F6A}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FraudRuleEngine.Transactions.Api", "src\FraudRuleEngine.Transactions.Api\FraudRuleEngine.Transactions.Api.csproj", "{E5F6A7B8-C9D0-4E5F-9A0B-1C2D3E4F5A6B}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FraudRuleEngine.Evaluations.Worker", "src\FraudRuleEngine.Evaluations.Worker\FraudRuleEngine.Evaluations.Worker.csproj", "{F6A7B8C9-D0E1-4F5A-9B0C-1D2E3F4A5B6C}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FraudRuleEngine.Reporting.Api", "src\FraudRuleEngine.Reporting.Api\FraudRuleEngine.Reporting.Api.csproj", "{A7B8C9D0-E1F2-4A5B-9C0D-1E2F3A4B5C6D}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FraudRuleEngine.Shared", "src\FraudRuleEngine.Shared\FraudRuleEngine.Shared.csproj", "{B8C9D0E1-F2A3-4B5C-9D0E-1F2A3B4C5D6E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FraudRuleEngine.Core", "src\FraudRuleEngine.Core\FraudRuleEngine.Core.csproj", "{96114848-2185-4B98-A19D-3E69F3E11AC5}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E5F6A7B8-C9D0-4E5F-9A0B-1C2D3E4F5A6B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E5F6A7B8-C9D0-4E5F-9A0B-1C2D3E4F5A6B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E5F6A7B8-C9D0-4E5F-9A0B-1C2D3E4F5A6B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E5F6A7B8-C9D0-4E5F-9A0B-1C2D3E4F5A6B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F6A7B8C9-D0E1-4F5A-9B0C-1D2E3F4A5B6C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F6A7B8C9-D0E1-4F5A-9B0C-1D2E3F4A5B6C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F6A7B8C9-D0E1-4F5A-9B0C-1D2E3F4A5B6C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F6A7B8C9-D0E1-4F5A-9B0C-1D2E3F4A5B6C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A7B8C9D0-E1F2-4A5B-9C0D-1E2F3A4B5C6D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A7B8C9D0-E1F2-4A5B-9C0D-1E2F3A4B5C6D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A7B8C9D0-E1F2-4A5B-9C0D-1E2F3A4B5C6D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A7B8C9D0-E1F2-4A5B-9C0D-1E2F3A4B5C6D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B8C9D0E1-F2A3-4B5C-9D0E-1F2A3B4C5D6E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B8C9D0E1-F2A3-4B5C-9D0E-1F2A3B4C5D6E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B8C9D0E1-F2A3-4B5C-9D0E-1F2A3B4C5D6E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{96114848-2185-4B98-A19D-3E69F3E11AC5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{96114848-2185-4B98-A19D-3E69F3E11AC5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{96114848-2185-4B98-A19D-3E69F3E11AC5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{96114848-2185-4B98-A19D-3E69F3E11AC5}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{E5F6A7B8-C9D0-4E5F-9A0B-1C2D3E4F5A6B} = {A1B2C3D4-E5F6-4A5B-8C9D-0E1F2A3B4C5D}
+		{F6A7B8C9-D0E1-4F5A-9B0C-1D2E3F4A5B6C} = {A1B2C3D4-E5F6-4A5B-8C9D-0E1F2A3B4C5D}
+		{A7B8C9D0-E1F2-4A5B-9C0D-1E2F3A4B5C6D} = {A1B2C3D4-E5F6-4A5B-8C9D-0E1F2A3B4C5D}
+		{B8C9D0E1-F2A3-4B5C-9D0E-1F2A3B4C5D6E} = {A1B2C3D4-E5F6-4A5B-8C9D-0E1F2A3B4C5D}
+		{96114848-2185-4B98-A19D-3E69F3E11AC5} = {A1B2C3D4-E5F6-4A5B-8C9D-0E1F2A3B4C5D}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F0A693F2-CCA2-49AC-84D5-16AAEA719738}
+	EndGlobalSection
+EndGlobal

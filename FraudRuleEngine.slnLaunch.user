@@ -1,0 +1,22 @@
+[
+  {
+    "Name": "New Profile",
+    "Projects": [
+      {
+        "Name": "src\\FraudRuleEngine.Transactions.Api\\FraudRuleEngine.Transactions.Api.csproj",
+        "Action": "Start",
+        "DebugTarget": ""
+      },
+      {
+        "Name": "src\\FraudRuleEngine.Evaluations.Worker\\FraudRuleEngine.Evaluations.Worker.csproj",
+        "Action": "Start",
+        "DebugTarget": ""
+      },
+      {
+        "Name": "src\\FraudRuleEngine.Reporting.Api\\FraudRuleEngine.Reporting.Api.csproj",
+        "Action": "Start",
+        "DebugTarget": ""
+      }
+    ]
+  }
+]

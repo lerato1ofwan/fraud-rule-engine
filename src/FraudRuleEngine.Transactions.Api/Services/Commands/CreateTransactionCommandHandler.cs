@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System;
 using FraudRuleEngine.Shared.Common;
+using FraudRuleEngine.Shared.Metrics;
 using FraudRuleEngine.Transactions.Api.Data.Repositories;
 using FraudRuleEngine.Transactions.Api.Data.UnitOfWork;
 using FraudRuleEngine.Transactions.Api.Domain.Entities;
@@ -51,6 +52,9 @@ public class CreateTransactionCommandHandler : IRequestHandler<CreateTransaction
                     request.Metadata ?? new Dictionary<string, string>());
 
                 await _repository.AddAsync(transaction, ct);
+
+                // Record metrics
+                FraudMetrics.TransactionsReceivedTotal.Add(1);
 
                 return Result<Guid>.Success(transaction.TransactionId);
             }

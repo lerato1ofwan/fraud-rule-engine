@@ -54,7 +54,7 @@ public class FraudEvaluationWorker : BackgroundService
                     await producer.ProduceAsync("fraud.assessed", fraudAssessed, ct);
 
                     _logger.LogInformation(
-                        "Fraud evaluation completed for transaction {TransactionId}. Fraudulent: {IsFlagged}, Risk: {RiskScore}",
+                        "Fraud evaluation completed for transaction {TransactionId}. Flagged: {IsFlagged}, Risk: {RiskScore}",
                         message.TransactionId,
                         fraudCheck.IsFlagged,
                         fraudCheck.OverallRiskScore);

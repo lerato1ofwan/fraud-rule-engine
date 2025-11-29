@@ -13,7 +13,7 @@ public class ForeignCountryRule : IFraudRule
     public string RuleName => "ForeignCountryRule";
     private readonly string _allowedCountry;
 
-    public ForeignCountryRule(string allowedCountry = "US")
+    public ForeignCountryRule(string allowedCountry = "RSA")
     {
         _allowedCountry = allowedCountry;
     }
@@ -28,7 +28,7 @@ public class ForeignCountryRule : IFraudRule
         IRuleDataContext dataContext,
         CancellationToken cancellationToken = default)
     {
-        var country = context.Transaction.Metadata.GetValueOrDefault("Country", "US");
+        var country = context.Transaction.Metadata.GetValueOrDefault("Country", _allowedCountry);
         
         if (!string.Equals(country, _allowedCountry, StringComparison.OrdinalIgnoreCase))
         {
