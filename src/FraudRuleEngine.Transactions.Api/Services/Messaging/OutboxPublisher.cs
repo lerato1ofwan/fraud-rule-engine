@@ -1,4 +1,4 @@
-  using FraudRuleEngine.Shared.Messaging;
+using FraudRuleEngine.Shared.Messaging;
 using FraudRuleEngine.Transactions.Api.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,7 +18,7 @@ public class OutboxPublisher : IHostedService
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        _timer = new Timer(PublishOutboxMessages, null, TimeSpan.Zero, TimeSpan.FromSeconds(15));
+        _timer = new Timer(async _ => await PublishOutboxMessages(cancellationToken), null, TimeSpan.Zero, TimeSpan.FromSeconds(15));
         return Task.CompletedTask;
     }
 
@@ -28,36 +28,44 @@ public class OutboxPublisher : IHostedService
         return Task.CompletedTask;
     }
 
-    private async void PublishOutboxMessages(object? state)
+    private async Task PublishOutboxMessages(object? state)
     {
-        using var scope = _serviceProvider.CreateScope();
-        var context = scope.ServiceProvider.GetRequiredService<TransactionDbContext>();
-        var producer = scope.ServiceProvider.GetRequiredService<IEventProducer>();
-
-        var messages = await context.OutboxMessages
-            .Where(m => m.ProcessedAt == null)
-            .OrderBy(m => m.CreatedAt)
-            .Take(100)
-            .ToListAsync();
-
-        foreach (var message in messages)
+        try
         {
-            try
+            using var scope = _serviceProvider.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<TransactionDbContext>();
+            var producer = scope.ServiceProvider.GetRequiredService<IEventProducer>();
+
+            var messages = await context.OutboxMessages
+                .Where(m => m.ProcessedAt == null)
+                .OrderBy(m => m.CreatedAt)
+                .Take(100)
+                .ToListAsync();
+
+            foreach (var message in messages)
             {
-                var topic = GetTopicForEventType(message.EventType);
-                // The payload is already JSON string, publish it directly
-                await producer.ProduceAsync(topic, message.Payload, CancellationToken.None);
-                message.ProcessedAt = DateTime.UtcNow;
+                try
+                {
+                    var topic = GetTopicForEventType(message.EventType);
+                    await producer.ProduceAsync(topic, message.Payload, CancellationToken.None);
+                    message.ProcessedAt = DateTime.UtcNow;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to publish outbox message {MessageId}", message.Id);
+                    // Consider: dead-letter queue or retry mechanism
+                }
             }
-            catch (Exception ex)
+
+            if (messages.Any())
             {
-                _logger.LogError(ex, "Failed to publish outbox message {MessageId}", message.Id);
+                await context.SaveChangesAsync();
             }
         }
-
-        if (messages.Any())
+        catch (Exception ex)
         {
-            await context.SaveChangesAsync();
+            // The timer will retry the operation after the specified interval
+            _logger.LogError(ex, "Critical error in OutboxPublisher");
         }
     }
 
@@ -66,7 +74,7 @@ public class OutboxPublisher : IHostedService
         return eventType switch
         {
             "TransactionReceivedEvent" => "transaction.received",
-            _ => "dead-letter"
+            _ => "dql"
         };
     }
 }
