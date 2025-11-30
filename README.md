@@ -28,6 +28,22 @@ The system consists of three microservices:
    cd fraud-rule-engine
    ```
 
+### Running the System
+
+**Option 1: Simplified Setup**
+```bash
+# 7 containers - Core functionality + basic observability
+docker-compose -f docker-compose.development.yml up -d
+```
+This includes: PostgreSQL, Kafka, 3 application services, Prometheus, Grafana
+
+**Option 2: Full Observability Stack**
+```bash
+# 13 containers - Complete observability (metrics, logs, traces)
+docker-compose up -d
+```
+This includes everything above plus: Loki, Promtail, Jaeger, Kafka UI
+
 2. **Create your environment file**:
    ```bash
    cp .env.example .env
@@ -120,12 +136,43 @@ docker compose down -v
 - Grafana for visualization
 - Docker Compose orchestration
 
-## 🧪 Testing
+## 🧪 Testing (Unit Tests and Integration Testing)
 
-### Create a Transaction
+Given the initial 8-10 days development constraint, my unit testing and integrations testing strategy focuses on only the most critical layers:
+
+### Domain Logic Integrity (Unit Tests)
+Focused on `FraudRuleEngine.Core` to ensure the set of fraud rules (e.g., `HighAmountRule`, `VelocityRule`, `ForeignCountryRule`) are mathematically and logically correct. Tests cover boundary conditions, edge cases (missing metadata, time window variations), and risk score aggregation logic. 
+
+### End-to-End (Integration Tests)
+Implemented in `FraudRuleEngine.Transactions.Api.Tests` using `WebApplicationFactory` and **Testcontainers** with real PostgreSQL databases using TestContainers. This validates the full DI, middleware pipeline, database interactions, and idempotency check.
+
+**Why:**
+- Prioritized domain rules and pipeline orchestration over controller unit tests (which test framework behavior rather than business logic)
+- Chose integration tests over shallow unit tests to validate actual database persistence and event flow
+- Used real PostgreSQL containers to catch EF Core mapping issues and migration problems that in-memory databases miss
+- Future work should include increasing test code coverage to include Reporting.Api and Evaluations.Worker codebases
+
+**Running Tests:**
+```bash
+# Run all tests
+dotnet test
+
+# Run only unit tests
+dotnet test --filter "FullyQualifiedName~Core.Tests"
+
+# Run only integration tests (requires Docker)
+dotnet test --filter "FullyQualifiedName~Transactions.Api.Tests"
+```
+
+<!-- **Test Coverage:**
+-  -->
+
+### API Testing Examples
+
+#### Create a Transaction
 
 ```bash
-curl -X POST http://localhost:5000/transactions \
+curl -X POST http://localhost:5000/api/transactions \
   -H "Content-Type: application/json" \
   -d '{
     "accountId": "123e4567-e89b-12d3-a456-426614174000",
@@ -141,22 +188,22 @@ curl -X POST http://localhost:5000/transactions \
   }'
 ```
 
-### Get Fraud Summary
+#### Get Fraud Summary
 
 ```bash
-curl http://localhost:5001/fraud/summary/{transactionId}
+curl http://localhost:5001/api/fraud-reports/summary/{transactionId}
 ```
 
-### Get Daily Stats
+#### Get Daily Stats
 
 ```bash
-curl http://localhost:5001/fraud/stats/daily?date=2024-01-01
+curl http://localhost:5001/api/fraud-reports/stats/daily?date=2024-01-01
 ```
 
-### Get Top Rules
+#### Get Top Rules
 
 ```bash
-curl http://localhost:5001/fraud/rules/top?top=10
+curl http://localhost:5001/api/fraud-reports/rules/top?top=10
 ```
 
 ## 📚 Documentation
@@ -242,6 +289,7 @@ dotnet ef migrations add MigrationName --context FraudReportingDbContext -o Data
 
 <!-- ## 🚧 Future Enhancements
 
+- Increase test coverage 
 - Event replay capability
 - More sophisticated fraud rules
 - Machine learning integration - might consider adding a fastapi + scikit learn model

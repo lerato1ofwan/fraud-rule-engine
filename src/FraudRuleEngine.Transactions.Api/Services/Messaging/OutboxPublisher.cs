@@ -74,7 +74,7 @@ public class OutboxPublisher : IHostedService
         return eventType switch
         {
             "TransactionReceivedEvent" => "transaction.received",
-            _ => "dql"
+            _ => "dlq"
         };
     }
 }

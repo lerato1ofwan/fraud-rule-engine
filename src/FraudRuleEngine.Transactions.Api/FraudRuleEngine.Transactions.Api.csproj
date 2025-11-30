@@ -43,9 +43,5 @@
     <ProjectReference Include="..\FraudRuleEngine.Shared\FraudRuleEngine.Shared.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Services\HealthChecks\" />
-  </ItemGroup>
-
 </Project>
 
