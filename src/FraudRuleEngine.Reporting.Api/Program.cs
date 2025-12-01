@@ -58,7 +58,11 @@ builder.Services.AddHttpClient("HttpClient")
 
 // Health checks
 builder.Services.AddHealthChecks()
-    .AddNpgSql(builder.Configuration.GetConnectionString("ReportingDb") ?? string.Empty);
+    .AddNpgSql(builder.Configuration.GetConnectionString("ReportingDb") ?? string.Empty)
+    .AddKafka(setup =>
+     {
+         setup.BootstrapServers = builder.Configuration["Kafka:BootstrapServers"] ?? "localhost:9092";
+     });
 
 // OpenTelemetry
 var serviceName = "fraud-rule-engine-reporting-api";

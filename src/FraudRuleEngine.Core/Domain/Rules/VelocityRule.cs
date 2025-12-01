@@ -24,7 +24,7 @@ public class VelocityRule : IFraudRule
     {
         // Declare what data this rule needs
         var request = RecentTransactionCountRequest.FromTransaction(transaction, _timeWindow);
-        yield return (IRequest<object>)request;
+        yield return RequestWrapper.Wrap(request);
     }
 
     public async Task<FraudRuleEvaluationResult> EvaluateAsync(

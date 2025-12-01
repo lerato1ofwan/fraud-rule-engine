@@ -1,21 +1,21 @@
 [
   {
-    "Name": "New Profile",
+    "Name": "Applications",
     "Projects": [
       {
-        "Name": "src\\FraudRuleEngine.Transactions.Api\\FraudRuleEngine.Transactions.Api.csproj",
+        "Path": "src\\FraudRuleEngine.Transactions.Api\\FraudRuleEngine.Transactions.Api.csproj",
         "Action": "Start",
-        "DebugTarget": ""
+        "DebugTarget": "FraudRuleEngine.Transactions.Api"
       },
       {
-        "Name": "src\\FraudRuleEngine.Evaluations.Worker\\FraudRuleEngine.Evaluations.Worker.csproj",
+        "Path": "src\\FraudRuleEngine.Evaluations.Worker\\FraudRuleEngine.Evaluations.Worker.csproj",
         "Action": "Start",
-        "DebugTarget": ""
+        "DebugTarget": "FraudRuleEngine.Evaluations.Worker"
       },
       {
-        "Name": "src\\FraudRuleEngine.Reporting.Api\\FraudRuleEngine.Reporting.Api.csproj",
+        "Path": "src\\FraudRuleEngine.Reporting.Api\\FraudRuleEngine.Reporting.Api.csproj",
         "Action": "Start",
-        "DebugTarget": ""
+        "DebugTarget": "FraudRuleEngine.Reporting.Api"
       }
     ]
   }
