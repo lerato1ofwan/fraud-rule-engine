@@ -1,9 +1,8 @@
 using FluentValidation;
 using MediatR;
 using FraudRuleEngine.Shared.Common;
-using Microsoft.Extensions.Logging;
 
-namespace FraudRuleEngine.Transactions.Api.Services.Behaviors;
+namespace FraudRuleEngine.Transactions.Api.Services.Behaviours;
 
 /// <summary>
 /// MediatR pipeline behavior that validates requests using FluentValidation.

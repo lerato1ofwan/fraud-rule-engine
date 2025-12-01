@@ -68,6 +68,8 @@ public class KafkaEventConsumer : IEventConsumer, IDisposable
                 catch (ConsumeException ex)
                 {
                     _logger.LogError(ex, "Error consuming message from topic {Topic}", topic);
+                    // backoff
+                    await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
                 }
             }
         }

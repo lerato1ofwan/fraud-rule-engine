@@ -25,7 +25,7 @@ public class FraudReportingWorker : BackgroundService
         var consumer = scope.ServiceProvider.GetRequiredService<IEventConsumer>();
 
         await consumer.ConsumeAsync<FraudAssessed>(
-            "fraud.assessed",
+            KafkaTopics.FraudAssessed,
             async (message, ct) =>
             {
                 var projection = scope.ServiceProvider.GetRequiredService<IFraudAssessedProjection>();

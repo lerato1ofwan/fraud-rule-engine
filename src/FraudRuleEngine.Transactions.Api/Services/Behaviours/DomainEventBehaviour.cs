@@ -5,7 +5,7 @@ using FraudRuleEngine.Shared.Common;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
-namespace FraudRuleEngine.Transactions.Api.Services.Behaviors;
+namespace FraudRuleEngine.Transactions.Api.Services.Behaviours;
 
 public class DomainEventBehaviour<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
     where TRequest : IRequest<TResponse>
@@ -23,7 +23,6 @@ public class DomainEventBehaviour<TRequest, TResponse> : IPipelineBehavior<TRequ
     {
         var response = await next();
 
-        // If the handler returned a failure result, don't process domain events
         if (response is Result<Guid> result && result.IsFailure)
         {
             return response;
@@ -72,13 +71,11 @@ public class DomainEventBehaviour<TRequest, TResponse> : IPipelineBehavior<TRequ
 
             throw;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            // Handle any other exceptions that might occur during SaveChangesAsync
-            // (e.g., InvalidOperationException from connection issues, etc.)
-            // If SaveChangesAsync fails, nothing is persisted
+            // Catch-all for non-database exceptions (connection failures, timeouts, etc.)
+            // Ensures atomicity because if the SaveChangesAsync call fails, nothing is persisted
             
-            // If TResponse is Result<T>, return a failure result
             if (typeof(TResponse).IsGenericType &&
                 typeof(TResponse).GetGenericTypeDefinition() == typeof(Result<>))
             {
@@ -88,13 +85,13 @@ public class DomainEventBehaviour<TRequest, TResponse> : IPipelineBehavior<TRequ
 
                 if (failureMethod != null)
                 {
-                    // For non-DbUpdateException errors, use a generic error message
                     var errorMessage = "An error occurred while saving the transaction. Please verify your input and try again.";
                     
                     return (TResponse)failureMethod.Invoke(null, new object[] { errorMessage })!;
                 }
             }
 
+            // For non-Result responses, rethrow to maintain proper error propagation
             throw;
         }
     }
@@ -131,3 +128,4 @@ public class DomainEventBehaviour<TRequest, TResponse> : IPipelineBehavior<TRequ
         return "An error occurred while saving the transaction. Please verify your input and try again.";
     }
 }
+

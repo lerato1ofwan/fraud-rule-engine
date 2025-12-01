@@ -7,7 +7,6 @@ using FraudRuleEngine.Transactions.Api.Services.Commands;
 using FraudRuleEngine.Transactions.Api.Services.Messaging;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -15,7 +14,7 @@ using OpenTelemetry.Trace;
 using Polly;
 using Polly.Extensions.Http;
 using System.Net;
-using FraudRuleEngine.Transactions.Api.Services.Behaviors;
+using FraudRuleEngine.Transactions.Api.Services.Behaviours;
 using FluentValidation;
 
 namespace FraudRuleEngine.Transactions.Api;
@@ -41,6 +40,8 @@ public class Program
         builder.Services.AddScoped<ITransactionUnitOfWork, TransactionUnitOfWork>();
         builder.Services.AddScoped<IOutboxService, OutboxService>();
         builder.Services.AddScoped<IEventProducer, KafkaEventProducer>();
+
+        builder.Services.AddHostedService<OutboxPublisher>();
 
         // FluentValidation
         builder.Services.AddValidatorsFromAssembly(typeof(CreateTransactionCommand).Assembly);
@@ -139,11 +140,18 @@ public class Program
         // Controllers
         app.MapControllers();
 
-        // Migrate database
-        using (var scope = app.Services.CreateScope())
+        // Migrate database on startup
+        try
         {
+            using var scope = app.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<TransactionDbContext>();
             db.Database.Migrate();
+        }
+        catch (Exception ex)
+        {
+            var logger = app.Services.GetRequiredService<ILogger<Program>>();
+            logger.LogError(ex, "An error occurred while migrating the database");
+            throw;
         }
 
         app.Run();
