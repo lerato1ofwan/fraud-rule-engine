@@ -1,12 +1,15 @@
 # Fraud Rule Engine
 
-A demo system for fraud detection using a custom rule engine implementation, built with .NET 8, following Domain-Driven Design (DDD), CQRS, and microservices with event-driven architecture patterns.
+A demo system for fraud detection using a custom rule engine implementation, built with .NET 8, following Domain-Driven Design (DDD), CQRS, and microservices with event-driven architecture patterns. 
 
-## 🏗️ Architecture
+Project Brief: \
+Create a system that processes categorized transaction events and flags potential fraud. Apply a set of fraud rules per transaction based on different criteria and then store them in a data store. Allow the retrieval of this data via an API.
+
+## 🏗️ Applications
 
 The system consists of three microservices:
 
-1. **Transactions API**: Ingress service for receiving and storing transactions
+1. **Transactions API**: Ingress service for injesting, receiving and storing transactions
 2. **Evaluations Worker**: Background worker that evaluates transactions against fraud rules
 3. **Reporting API**: Analytics service with read-optimized data models and queries
 
@@ -28,23 +31,10 @@ The system consists of three microservices:
    cd fraud-rule-engine
    ```
 
-### Running the System
-
-**Option 1: Simplified Setup**
-```bash
-# 7 containers - Core functionality + basic observability
-docker-compose -f docker-compose.development.yml up -d
-```
-This includes: PostgreSQL, Kafka, 3 application services, Prometheus, Grafana
-
-**Option 2: Full Observability Stack**
-```bash
-# 13 containers - Complete observability (metrics, logs, traces)
-docker-compose up -d
-```
-This includes everything above plus: Loki, Promtail, Jaeger, Kafka UI
-
 2. **Create your environment file**:
+
+   Copy the .env.example and rename it to .env or run the below command:
+
    ```bash
    cp .env.example .env
    ```
@@ -58,10 +48,23 @@ This includes everything above plus: Loki, Promtail, Jaeger, Kafka UI
 
    > **Note**: The `.env` file is already in `.gitignore` and will not be committed to version control.
 
-4. **Start the application stack**:
+### How To Run
+
+1. Two options for running, a development simple version and the production stack.
+
+   **Option 1: Simplified Setup**
    ```bash
-   docker compose up --build -d
+   # 7 containers - Core functionality + basic observability
+   docker-compose -f docker-compose.development.yml up -d
    ```
+   This includes: PostgreSQL, Kafka, 3 application services, Prometheus, Grafana
+
+   **Option 2: Full Production Stack**
+   ```bash
+   # 13 containers - Complete observability (metrics, logs, traces)
+   docker-compose up -d
+   ```
+   This includes everything above plus: Loki, Promtail, Jaeger, Kafka UI
 
 5. **Verify services are running**:
    ```bash
@@ -82,7 +85,7 @@ Once all services are running, you can access:
 - **Kafka UI**: http://localhost:8080
 - **Prometheus**: http://localhost:9090
 - **Grafana**: http://localhost:3000 (credentials from `.env`)
-
+- **Jaegar:** http://localhost:16686/search
 ### Stopping Services
 
 ```bash
@@ -108,6 +111,7 @@ docker compose down -v
 - CQRS with MediatR
 - Problem Details for error handling
 - Health checks
+- Produces transactions.receieved messages to kafka to rule set evaluations
 
 ### Evaluations Worker
 - Kafka consumer for transaction events
@@ -117,13 +121,14 @@ docker compose down -v
 - Request/RequestHandler Mediator pattern for data loading required by rules
 - Multiple fraud rules to flag transactions
 - Kafka producer for fraud assessment events
+- Exponential backoffs on producer and consumer failures to store in dead letter queue
 
 ### Reporting API
 - Kafka consumer for fraud assessment events
 - Event projections for read models
 - CQRS read side with optimized queries
 - Analytics endpoints (summary, daily stats, top rules)
-<!-- - Materialized views for performance @Todo: will see if there'll be enough time to implement  -->
+- Implementations and makes data evaluations to grafana dashboard (via prometheus metrics)
 
 ### Infrastructure
 - **Single PostgreSQL instance** shared by all services, with separate databases per application:
@@ -206,6 +211,55 @@ curl http://localhost:5001/api/fraud-reports/stats/daily?date=2024-01-01
 curl http://localhost:5001/api/fraud-reports/rules/top?top=10
 ```
 
+### Generating Test Data with Postman Collection
+
+To populate the system with test data for visualization in Grafana and Kafka UI, you can use the included Postman collection.
+
+**Prerequisites**:
+- Postman installed (or use the Postman CLI/Newman or Insomnia depending on preferrence)
+- Services running (see [How To Run](#how-to-run) above)
+
+**Using the Collection**:
+
+1. **Import the collection**:
+   - Open Postman
+   - Click "Import" and select `transactions-import-collection.js` from the project root
+   - The collection will appear as "Rule Engine Transaction Load Test"
+
+2. **Run the collection**:
+   - Open the collection
+   - Click "Run" (or use the Runner)
+   - Set iterations to **100** (or more for more data)
+   - Click "Run Rule Engine Transaction Load Test"
+
+3. **What it does**:
+   - Generates random transaction data for each iteration
+   - Random amounts (1-10,000), currencies, countries, IP addresses
+   - 70% bias towards ZAR/RSA (South African context)
+   - Unique external IDs in various formats
+   - Sends POST requests to `http://localhost:5000/api/transactions`
+
+4. **After running**:
+   - Check Grafana dashboards for metrics and visualizations
+   - View Kafka topics in Kafka UI (`http://localhost:8080`)
+   - Check fraud reports via the Reporting API
+   - Query fraud statistics and top rules
+
+**Note**: The first run will show empty dashboards until transactions are processed. After running 100+ iterations, you should see:
+- Transaction metrics in Grafana
+- Events flowing through Kafka topics
+- Fraud assessments being generated
+- Reporting data populated
+
+**Alternative: Using Newman (Postman CLI)**:
+```bash
+# Install Newman globally
+npm install -g newman
+
+# Run the collection
+newman run transactions-import-collection.js -n 100
+```
+
 ## 📚 Documentation
 
 - [Architecture Documentation](docs/architecture.md)
@@ -236,23 +290,106 @@ curl http://localhost:5001/api/fraud-reports/rules/top?top=10
 
 ## 📁 Project Structure
 
+The project follows a clean architecture with clear separation of concerns:
+
 ```
 fraud-rule-engine/
 ├── src/
-│   ├── FraudRuleEngine.Transactions.Api/
-│   ├── FraudRuleEngine.Evaluations.Worker/
-│   ├── FraudRuleEngine.Reporting.Api/
-│   └── FraudRuleEngine.Shared/
-├── infrastructure/
-│   ├── kafka/
-│   ├── postgres/
-│   ├── grafana/
-│   └── prometheus/
-│ 
-└── .env.example
-└── .env (Needs to be created during initial setup)
-└── docs/
-└── docker-compose.yaml
+│   ├── FraudRuleEngine.Transactions.Api/          
+│   │   ├── Controllers/                            
+│   │   ├── Data/                                  
+│   │   │   ├── Migrations/                        
+│   │   │   ├── Models/                             
+│   │   │   ├── Repositories/                       
+│   │   │   └── UnitOfWork/                         
+│   │   ├── Domain/                                  
+│   │   │   ├── DTOs/                               
+│   │   │   ├── Events/                             
+│   │   │   └── ValueObjects/                       
+│   │   ├── Services/                              
+│   │   │   ├── Behaviours/                         
+│   │   │   ├── Commands/                           
+│   │   │   ├── Queries/                            
+│   │   │   └── Messaging/                          
+│   │   ├── Dockerfile                              
+│   │   └── Program.cs                              
+│   │
+│   ├── FraudRuleEngine.Evaluations.Worker/         
+│   │   ├── Data/                                   
+│   │   │   ├── Migrations/                         
+│   │   │   ├── Models/                             
+│   │   │   ├── Repositories/                       
+│   │   │   └── Requests/                           
+│   │   ├── Services/                               
+│   │   ├── Workers/                                
+│   │   ├── Dockerfile                              
+│   │   └── Program.cs                              
+│   │
+│   ├── FraudRuleEngine.Reporting.Api/              
+│   │   ├── Controllers/                           
+│   │   ├── Data/                                   
+│   │   │   ├── Migrations/                         
+│   │   │   ├── Models/                             
+│   │   │   └── Repositories/                       
+│   │   ├── Domain/                                 
+│   │   │   ├── DTOs/                               
+│   │   │   └── ReadModels/                         
+│   │   ├── Services/                               
+│   │   │   ├── Metrics/                            
+│   │   │   ├── Projections/                        
+│   │   │   └── Queries/                            
+│   │   ├── Workers/                                
+│   │   ├── Metrics/                                
+│   │   ├── Dockerfile                              
+│   │   └── Program.cs                              
+│   │
+│   ├── FraudRuleEngine.Core/                       
+│   │   └── Domain/                                 
+│   │       ├── Rules/                              
+│   │       ├── Specifications/                    
+│   │       ├── ValueObjects/                      
+│   │       ├── DataRequests/                      
+│   │       ├── CompositeRulePipeline.cs           
+│   │       └── IFraudRule.cs                      
+│   │
+│   └── FraudRuleEngine.Shared/                    
+│       ├── Common/                                
+│       │   └── Result.cs                          
+│       ├── Contracts/                             
+│       ├── Events/                                
+│       ├── Messaging/                             
+│       └── Metrics/                               
+│
+├── tests/
+│   ├── FraudRuleEngine.Core.Tests/                 
+│   │   ├── Domain/                                
+│   │   └── Helpers/                            
+│   │
+│   └── FraudRuleEngine.Transactions.Api.Tests/    
+│       ├── Abstractions/                           
+│       └── Integration/                           
+│
+├── infrastructure/                                  
+│   ├── grafana/                                    
+│   │   ├── dashboards/                             
+│   │   └── provisioning/                          
+│   ├── kafka/                                    
+│   ├── prometheus/                                
+│   └── promtail/                                   
+│
+├── docs/                                           # Documentation
+│   ├── architecture.md                            
+│   ├── events.md                                   # Event schema documentation
+│   ├── rules.md                                    # Fraud rules documentation
+│   └── Rules and the Evaluation Service.md         # Rule engine design patterns
+│
+├── docker-compose.yaml                              
+├── docker-compose.development.yml                  
+├── FraudRuleEngine.sln                             
+├── .env.example                                   
+├── README-DEV.md                                   
+├── README.md                                   
+└── transactions-import-collection.js              # Postman/API collection for testing
 ```
 
 ## 🔧 Development
