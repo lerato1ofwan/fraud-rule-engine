@@ -1,6 +1,5 @@
 using FraudRuleEngine.Transactions.Api.Data;
 using Newtonsoft.Json;
-using System.Text.Json;
 
 namespace FraudRuleEngine.Transactions.Api.Services.Messaging;
 
@@ -30,4 +29,3 @@ public class OutboxService : IOutboxService
         await _context.OutboxMessages.AddAsync(outboxMessage, cancellationToken);
     }
 }
-

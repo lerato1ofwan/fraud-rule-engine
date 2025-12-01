@@ -102,6 +102,7 @@ services:
         echo 'Creating topics...' &&
         kafka-topics --create --if-not-exists --topic ${KAFKA_TOPIC_TRANSACTION_RECEIVED} --bootstrap-server kafka:9092 --partitions ${KAFKA_TOPIC_PARTITIONS} --replication-factor ${KAFKA_REPLICATION_FACTOR} &&
         kafka-topics --create --if-not-exists --topic ${KAFKA_TOPIC_FRAUD_ASSESSED} --bootstrap-server kafka:9092 --partitions ${KAFKA_TOPIC_PARTITIONS} --replication-factor ${KAFKA_REPLICATION_FACTOR} &&
+        kafka-topics --create --if-not-exists --topic ${KAFKA_TOPIC_DEAD_LETTER_QUEUE:-dlq} --bootstrap-server kafka:9092 --partitions ${KAFKA_TOPIC_PARTITIONS} --replication-factor ${KAFKA_REPLICATION_FACTOR} &&
         echo 'Topics created successfully.'
       "
 
