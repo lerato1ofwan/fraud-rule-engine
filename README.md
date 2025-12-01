@@ -1,3 +1,18 @@
+
+<div align="center">
+
+![.NET](https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet&logoColor=white)
+![C#](https://img.shields.io/badge/C%23-12.0-239120?logo=c-sharp&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-316192?logo=postgresql&logoColor=white)
+![Kafka](https://img.shields.io/badge/Apache%20Kafka-2.8+-231F20?logo=apache-kafka&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
+![Architecture](https://img.shields.io/badge/Architecture-Microservices-FF6B6B?logo=kubernetes&logoColor=white)
+![DDD](https://img.shields.io/badge/DDD-Domain%20Driven%20Design-6C5CE7)
+![CQRS](https://img.shields.io/badge/CQRS-Command%20Query%20Separation-00B894)
+![Event-Driven](https://img.shields.io/badge/Event--Driven-Kafka%20Streaming-FF6B6B)
+
+</div>
+
 # Fraud Rule Engine
 
 A demo system for fraud detection using a custom rule engine implementation, built with .NET 8, following Domain-Driven Design (DDD), CQRS, and microservices with event-driven architecture patterns. 
