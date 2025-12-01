@@ -24,7 +24,7 @@ public class FraudEvaluationWorker : BackgroundService
         using var scope = _serviceProvider.CreateScope();
         var consumer = scope.ServiceProvider.GetRequiredService<IEventConsumer>();
         await consumer.ConsumeAsync<TransactionReceived>(
-            "transaction.received",
+            KafkaTopics.TransactionReceived,
             async (message, ct) =>
             {
                 var evaluationService = scope.ServiceProvider.GetRequiredService<IFraudEvaluationService>();
@@ -51,7 +51,7 @@ public class FraudEvaluationWorker : BackgroundService
                         }).ToList()
                     };
 
-                    await producer.ProduceAsync("fraud.assessed", fraudAssessed, ct);
+                    await producer.ProduceAsync(KafkaTopics.FraudAssessed, fraudAssessed, ct);
 
                     _logger.LogInformation(
                         "Fraud evaluation completed for transaction {TransactionId}. Flagged: {IsFlagged}, Risk: {RiskScore}",
@@ -62,8 +62,8 @@ public class FraudEvaluationWorker : BackgroundService
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Error processing transaction {TransactionId}", message.TransactionId);
-                    // Instead of crashing, publish to our DLQ and allow the worker to continue processing other messages.
-                    await producer.ProduceAsync("fraud.evaluation.failed", message, ct);
+                    // Producer will automatically retry and publish to DLQ if all retries fail
+                    await producer.ProduceAsync(KafkaTopics.DeadLetterQueue, message, ct);
                 }
             },
             stoppingToken);

@@ -9,9 +9,6 @@ using FraudRuleEngine.Evaluations.Worker.Workers;
 using FraudRuleEngine.Shared.Messaging;
 using FraudRuleEngine.Shared.Metrics;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
-using OpenTelemetry;
-using OpenTelemetry.Exporter;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -44,7 +41,7 @@ builder.Services.AddScoped<IFraudRule, VelocityRule>(sp =>
     new VelocityRule(fraudRulesConfig.GetValue<int>("VelocityRule:MaxTransactionsPerHour")));
 
 builder.Services.AddScoped<IFraudRule, ForeignCountryRule>(sp =>
-    new ForeignCountryRule(fraudRulesConfig.GetValue<string>("ForeignCountryRule:AllowedCountry")));
+    new ForeignCountryRule(allowedCountry: fraudRulesConfig.GetValue<string>("ForeignCountryRule:AllowedCountry") ?? "RSA"));
 
 // Rule Pipeline
 builder.Services.AddScoped(sp =>

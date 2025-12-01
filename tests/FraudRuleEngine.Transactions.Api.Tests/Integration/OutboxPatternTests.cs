@@ -1,4 +1,3 @@
-using FraudRuleEngine.Transactions.Api.Data;
 using FraudRuleEngine.Transactions.Api.Domain.Events;
 using FraudRuleEngine.Transactions.Api.Services.Commands;
 using FluentAssertions;
